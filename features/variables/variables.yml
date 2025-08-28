@@ -1,0 +1,65 @@
+schema: SimV1
+name: variables
+
+connections:
+  - name: api-gateway
+    port: 8080
+
+services:
+  - name: secure-user-service
+    steps:
+      - direction: In
+        trigger:
+          - uri: /api/{VAR[environment]}/users
+          - property: Method
+            value: GET
+        verify:
+          - property: Authorization
+            value: "Bearer {VAR[apiToken]}"
+      - direction: Out
+        message:
+          payload: |
+            {
+              "users": [
+                {
+                  "id": 1,
+                  "name": "{VAR[defaultUser]}",
+                  "environment": "{VAR[environment]}"
+                }
+              ],
+              "authenticated": true
+            }
+
+  - name: database-connection-test
+    steps:
+      - direction: In
+        trigger:
+          - uri: /health/database
+      - direction: Out
+        message:
+          payload: |
+            {
+              "status": "connected",
+              "database": "{VAR[dbHost]}",
+              "user": "{VAR[dbUser]}",
+              "timestamp": "{date}"
+            }
+
+  - name: external-api-proxy
+    steps:
+      - direction: In
+        trigger:
+          - uri: /proxy/external
+        buffer:
+          - name: requestData
+      - direction: Out
+        message:
+          headers:
+            X-API-Key: "{VAR[externalApiKey]}"
+            X-Secret: "{VAR[secretKey]}"
+          payload: |
+            {
+              "proxied_request": "{B[requestData]}",
+              "external_service": "{VAR[externalServiceUrl]}",
+              "api_version": "{VAR[apiVersion]}"
+            }
