@@ -1,0 +1,18 @@
+schema: SimV1
+name: variables
+
+connections:
+  - name: http
+
+services:
+  - name: send out
+    steps:
+      - direction: Out
+      - verify:
+          - value: "{REGEX['(.*)functional(.*)']}"
+
+  - name: receive
+    steps:
+      - name: request
+      - insert:
+          - value: "{VAR[workspace]}"
