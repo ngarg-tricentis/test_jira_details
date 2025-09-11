@@ -1,0 +1,15 @@
+schema: SimV1
+name: templates
+
+includes:
+  - ../http
+
+templates:
+  services:
+    - name: OAuth template
+      steps:
+        - to: echo
+          insert:
+            - value: '{RANDOMREGEX["^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$"]}'
+        - buffer:
+            - name: token

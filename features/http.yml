@@ -1,0 +1,9 @@
+schema: SimV1
+
+connections:
+  - name: http
+    port: 17071
+
+  - name: echo
+    uri: https://webservice.toscacloud.com/echo
+    listen: false
