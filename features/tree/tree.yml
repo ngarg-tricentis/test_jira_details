@@ -1,0 +1,118 @@
+schema: SimV1
+name: tree-property-example
+
+connections:
+  - name: tree-api
+    port: 8090
+
+services:
+  - name: user-profile-service
+    steps:
+      - direction: In
+        trigger:
+          - uri: /api/users/profile
+          - property: Method
+            value: POST
+        buffer:
+          - name: userId
+            jsonPath: userId
+      - direction: Out
+        message:
+          headers:
+            - key: Content-Type
+              value: application/json
+          payload: |
+            {
+              "userId": "",
+              "profile": {},
+              "preferences": {}
+            }
+        insert:
+          - jsonPath: userId
+            value: '{b[userId]}'
+          - jsonPath: profile
+            tree: |
+              "{
+                ""firstName"": ""John"",
+                ""lastName"": ""Doe"",
+                ""email"": ""john.doe@example.com"",
+                ""address"": {
+                  ""street"": ""123 Main St"",
+                  ""city"": ""Springfield"",
+                  ""zipCode"": ""12345""
+                }
+              }"
+          - jsonPath: preferences
+            tree: |
+              "{
+                ""theme"": ""dark"",
+                "notifications": {
+                  ""email"": true,
+                  ""push"": false,
+                  ""sms"": true
+                },
+                ""privacy"": {
+                  ""profileVisible"": true,
+                  ""shareData"": false
+                }
+              }"
+
+  - name: xml-document-service
+    steps:
+      - direction: In
+        trigger:
+          - uri: /api/documents/create
+          - property: Method
+            value: POST
+        buffer:
+          - name: documentId
+            jsonPath: documentId
+      - direction: Out
+        message:
+          headers:
+            - key: Content-Type
+              value: application/xml
+          payload: |
+            <response>
+              <documentId></documentId>
+              <document></document>
+            </response>
+        insert:
+          - xPath: //documentId
+            value: '{b[documentId]}'
+          - xPath: //document
+            tree: |
+              <metadata>
+                <title>Sample Document</title>
+                <author>API Simulation</author>
+                <created>2024-01-01T10:00:00Z</created>
+                <tags>
+                  <tag>example</tag>
+                  <tag>simulation</tag>
+                  <tag>tree</tag>
+                </tags>
+              </metadata>
+
+  - name: verification-service
+    steps:
+      - direction: In
+        trigger:
+          - uri: /api/verify
+          - property: Method
+            value: POST
+        verify:
+          - jsonPath: data.structure
+            tree: |
+              "{
+                ""type"": ""complex"",
+                ""nested"": {
+                  ""level1"": {
+                    ""level2"": {
+                      ""value"": ""expected""
+                    }
+                  }
+                }
+              }"
+      - direction: Out
+        message:
+          payload: '{"status": "verified", "message": "Tree structure matches expected format"}'
