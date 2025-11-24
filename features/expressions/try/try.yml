@@ -1,0 +1,38 @@
+schema: SimV1
+name: try
+
+includes:
+  - ../../http
+
+services:
+
+  - name: try test
+    steps:
+      - to: http
+        insert:
+          - uri: /try?a=1&b=2
+      - verify:
+          - value: 3
+      - to: http
+        insert:
+          - uri: /try?a=1
+      - verify:
+          - value: 'error: a and b are required'
+
+  - name: try service
+    steps:
+      - trigger:
+          - type: Path
+            value: try
+        buffer:
+          - type: Query
+            name: a
+            key: a
+          - type: Query
+            name: b
+            key: b
+      - direction: Out
+        insert:
+          - jsonPath: result
+            dataType: Numeric
+            value: "{try[{math[{b[a]} + {b[b]}]}][error: a and b are required]}"

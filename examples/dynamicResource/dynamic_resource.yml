@@ -1,0 +1,53 @@
+schema: SimV1
+name: dynamic resource
+
+connections:
+  - name: http
+    port: 17071
+
+resources:
+  - name: data
+    type: Table
+    file: data.csv
+    separator: "|"
+
+services:
+  - name: dynamic resource test
+    steps:
+      - to: http
+        insert:
+          - uri: /a/1/b?x=2&y=3
+      - verify:
+          - value: '"{""x"":2,""y"":3}"'
+      - to: http
+        insert:
+          - uri: /a/1/b?x=2
+      - verify:
+          - value: '"{""x"":2}"'
+      - to: http
+        insert:
+          - uri: /a/1/b
+      - verify:
+          - value: '"{""error"":""no data found""}"'
+
+  - name: dynamic resource service
+    steps:
+      - trigger:
+          - type: Path
+            value: a/*/
+        buffer:
+          - type: Path
+            value: a/{XB[a]}/*
+          - type: Query
+            key: x
+            name: x
+          - type: Query
+            key: y
+            name: y
+      - resource:
+          read:
+            - ref: data
+              name: result
+              one: "a='{B[a]}' AND {try[x='{B[x]}'][x='']} AND {try[y='{B[y]}'][y='']}"
+        insert:
+          - value: "{b[result.data]}"
